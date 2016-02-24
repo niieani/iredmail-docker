@@ -1,0 +1,5 @@
+persistent/
+docker-compose.*.yml
+iRedMail*/
+bak/
+docker/

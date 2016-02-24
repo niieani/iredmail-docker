@@ -1,0 +1,187 @@
+version: '2'
+services:
+  iredadmin:
+    container_name: iredadmin
+    hostname: iredadmin
+    domainname: example.com
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_IREDADMIN: YES
+        USE_IREDADMIN: YES
+        HOSTNAME: example.com
+    links:
+      - mysql
+      - postfix
+    volumes_from:
+      - mysql
+      - nginx
+
+  iredapd:
+    container_name: iredapd
+    hostname: iredapd
+    domainname: example.com
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_IREDAPD: YES
+        HOSTNAME: example.com
+    expose:
+      - '7777'
+    links:
+      - mysql
+      - postfix
+    volumes:
+      - /opt/iredapd
+    volumes_from:
+      - mysql
+      - iredadmin
+
+  amavisd:
+    container_name: amavisd
+    hostname: amavisd
+    domainname: example.com
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_AMAVISD: YES
+        HOSTNAME: example.com
+    expose:
+      - '10024'
+      - '9998'
+    links:
+      - mysql
+      - dovecot
+    volumes:
+      - /etc/amavis
+    volumes_from:
+      - mysql
+      - postfix
+
+  postfix:
+    container_name: postfix
+    hostname: mail
+    domainname: example.com
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_POSTFIX: YES
+        HOSTNAME: example.com
+    ports:
+      - '7025:25'
+      - '7587:587'
+      - '7465:465'
+    links:
+      - amavisd
+      - ldap
+    volumes:
+      - /etc/postfix
+      - /var/vmail
+    volumes_from:
+      - mysql
+
+  dovecot:
+    container_name: dovecot
+    hostname: mail
+    domainname: example.com
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_DOVECOT: YES
+        HOSTNAME: example.com
+    ports:
+      - '7110:110'
+      - '7995:995'
+      - '7143:143'
+      - '7993:993'
+    expose:
+      - '2000'
+    links:
+      - postfix
+      - ldap
+    volumes:
+      - /etc/dovecot
+    volumes_from:
+      - mysql
+      - postfix
+
+  nginx:
+    container_name: nginx
+    hostname: mail
+    domainname: example.com
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_NGINX: YES
+        HOSTNAME: example.com
+    ports:
+      - '7080:80'
+      - '7443:443'
+    links:
+      - mysql
+    volumes:
+      - /opt/www
+      - /etc/uwsgi
+      - /etc/nginx
+    volumes_from:
+      - mysql
+
+  php:
+    container_name: php
+    hostname: php
+    domainname: example.com
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_PHP: YES
+        HOSTNAME: example.com
+    links:
+      - mysql
+    volumes_from:
+      - mysql
+      - nginx
+
+  ldap:
+    container_name: ldap
+    hostname: ldap
+    domainname: example.com
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_BUILD_SSL: YES
+        DOCKER_BUILD_BACKEND: YES
+        HOSTNAME: example.com
+    expose:
+      - '389'
+      - '636'
+    links:
+      - mysql
+    volumes:
+      - /etc/ssl
+      - /etc/ldap
+    volumes_from:
+      - mysql
+
+  mysql:
+    container_name: mysql
+    hostname: mysql
+    domainname: example.com
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: '12345'
+    expose: 
+      - '3306'
+    volumes:
+      - /var/lib/mysql
+      - /var/log
+      - /run/mysqld
