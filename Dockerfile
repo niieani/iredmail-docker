@@ -4,11 +4,10 @@ FROM quantumobject/docker-baseimage:15.10
 
 RUN sed 's/main$/main universe multiverse/' -i /etc/apt/sources.list
 RUN apt-get update && apt-get -y install python
-# docker build -t niieani/iredadmin-install-base -f ./docker/install-base/Dockerfile .
 ADD iRedMail /iRedMail
 
-ADD install.sh /iRedMail
-ADD capture.sh /capture.sh
+ADD util/install.sh /iRedMail
+ADD util/capture.sh /capture.sh
 
 ARG DOCKER_BUILD_SSL=NO
 ARG DOCKER_BUILD_BACKEND=NO
@@ -31,3 +30,5 @@ ARG HOSTNAME
 RUN bash /iRedMail/install.sh
 
 CMD /sbin/my_init
+
+# docker build -t niieani/iredadmin-install-base -f ./docker/install-base/Dockerfile .

@@ -1,5 +1,6 @@
 persistent/
 docker-compose.*.yml
 iRedMail*/
-bak/
+bak*/
 docker/
+iRedMail-*.tar.bz2*

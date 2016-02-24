@@ -2,9 +2,14 @@
 
 ## This script prepares iRedMail source for dockerization ##
 
+# apt-get install bzip2
+wget "https://bitbucket.org/zhb/iredmail/downloads/iRedMail-0.9.4.tar.bz2"
+tar xjf iRedMail-*.tar.bz2
 
+prefix=(./iRedMail*)
+# echo "$prefix"
 
-if [[ ! -f iRedMail* ]] && echo 'Failed to download/unpack the source' && exit 1
+[[ ! -d "$prefix" ]] && echo 'Failed to download/unpack the source' && exit 1
 
 replace() {
   LC_ALL=C sed -i "s/$(echo "$1" | sed -e 's/\([[\/.*]\|\]\)/\\&/g')/$(echo "$2" | sed -e 's/[\/&]/\\&/g')/g" "$3"
@@ -14,8 +19,6 @@ prepend() {
   replace "$1" "${2}${1}" "$3"
 }
 
-
-prefix=iRedMail*
 iredmailPackagesScript="${prefix}/functions/packages.sh"
 cleanupScript="${prefix}/functions/cleanup.sh"
 installScript="${prefix}/iRedMail.sh"
